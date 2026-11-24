@@ -17,7 +17,7 @@ A field the mapper does not recognise is reported as manual, never dropped silen
 
 ## Run it
 
-Python 3.9+, standard library only.
+Python 3.10+, standard library only.
 
 ```
 python3 -m migrate plan examples/line_cook_screener.vapi.json
