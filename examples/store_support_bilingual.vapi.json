@@ -1,0 +1,96 @@
+{
+  "name": "Tienda Soporte",
+  "firstMessageMode": "assistant-waits-for-user",
+  "model": {
+    "provider": "openai",
+    "model": "gpt-4o-mini",
+    "messages": [
+      {
+        "role": "system",
+        "content": "You answer order-status questions for an online store in English or Spanish, matching the caller. Look orders up with lookup_order. Hand billing disputes to a person."
+      }
+    ],
+    "tools": [
+      {
+        "type": "function",
+        "async": true,
+        "function": {
+          "name": "lookup_order",
+          "description": "Look up an order by number",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "order_number": {
+                "type": "string"
+              },
+              "items": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "sku": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            },
+            "required": [
+              "order_number"
+            ]
+          }
+        },
+        "server": {
+          "url": "https://store.example.com/vapi/orders"
+        }
+      },
+      {
+        "type": "transferCall",
+        "destinations": [
+          {
+            "type": "number",
+            "number": "+15555550142",
+            "description": "Billing team"
+          }
+        ]
+      },
+      {
+        "type": "endCall"
+      }
+    ]
+  },
+  "voice": {
+    "provider": "azure",
+    "voiceId": "es-MX-DaliaNeural",
+    "speed": 1.1
+  },
+  "transcriber": {
+    "provider": "deepgram",
+    "model": "nova-3",
+    "language": "multi"
+  },
+  "voicemailDetection": {
+    "provider": "vapi"
+  },
+  "voicemailMessage": "Hi, this is the store calling about your order. Please call us back when you can.",
+  "maxDurationSeconds": 600,
+  "backgroundSound": "https://cdn.example.com/store-ambience.mp3",
+  "stopSpeakingPlan": {
+    "numWords": 0,
+    "acknowledgementPhrases": [
+      "okay",
+      "s\u00ed"
+    ]
+  },
+  "hooks": [
+    {
+      "on": "call.ending",
+      "do": [
+        {
+          "type": "tool",
+          "toolId": "abc"
+        }
+      ]
+    }
+  ]
+}

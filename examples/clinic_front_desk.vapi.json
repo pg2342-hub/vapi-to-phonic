@@ -1,0 +1,108 @@
+{
+  "name": "Clinic Front Desk",
+  "firstMessage": "Thanks for calling the family clinic. This call may be recorded. How can I help today?",
+  "model": {
+    "provider": "anthropic",
+    "model": "claude-sonnet-4-5",
+    "temperature": 0.2,
+    "messages": [
+      {
+        "role": "system",
+        "content": "You are the after-hours front desk for a family clinic. Book, move or cancel appointments using the scheduling tools. Never give medical advice. If the caller describes an emergency, tell them to hang up and call 911. Today is {{today}}."
+      }
+    ],
+    "toolIds": [
+      "8f2c1a7e-0000-4000-8000-000000000001"
+    ],
+    "tools": [
+      {
+        "type": "function",
+        "function": {
+          "name": "find_open_slots",
+          "description": "Find open appointment slots",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "provider_id": {
+                "type": "string"
+              },
+              "date": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date"
+              },
+              "conversation_id": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "provider_id",
+              "conversation_id"
+            ]
+          }
+        },
+        "server": {
+          "url": "https://scheduling.example.com/vapi/slots"
+        }
+      },
+      {
+        "type": "transferCall",
+        "destinations": [
+          {
+            "type": "number",
+            "number": "+15555550188",
+            "message": "Transferring you to the nurse line.",
+            "description": "Nurse line for symptom questions"
+          },
+          {
+            "type": "sip",
+            "sipUri": "sip:oncall@pbx.example.com",
+            "description": "On-call physician"
+          }
+        ]
+      },
+      {
+        "type": "dtmf"
+      }
+    ]
+  },
+  "voice": {
+    "provider": "cartesia",
+    "voiceId": "a0e99841-438c-4a64-b679-ae501e7d6091"
+  },
+  "transcriber": {
+    "provider": "deepgram",
+    "model": "nova-3",
+    "language": "en-US",
+    "keywords": [
+      "pediatrics:2",
+      "copay",
+      "telehealth"
+    ]
+  },
+  "backgroundSound": "office",
+  "compliancePlan": {
+    "hipaaEnabled": true
+  },
+  "artifactPlan": {
+    "recordingEnabled": false
+  },
+  "startSpeakingPlan": {
+    "waitSeconds": 0.4,
+    "smartEndpointingPlan": {
+      "provider": "livekit"
+    }
+  },
+  "analysisPlan": {
+    "summaryPlan": {
+      "enabled": true
+    },
+    "successEvaluationPlan": {
+      "enabled": true,
+      "rubric": "PassFail"
+    }
+  },
+  "endCallFunctionEnabled": true
+}

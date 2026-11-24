@@ -1,0 +1,307 @@
+<!doctype html>
+<html lang="en">
+<head>
+<!-- demo-chrome --><meta name="theme-color" content="#f4f2ec"><link rel="icon" href="https://pranavgudise.dev/favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="https://pranavgudise.dev/kit/demo.css"><!-- /demo-chrome -->
+
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vapi to Phonic</title>
+<meta name="description" content="Paste a Vapi assistant config and get the Phonic agent, its tools, and a field-by-field report of what carries over and what needs a person.">
+<style>.head h1{margin:24px 0 12px}
+.head .lead{max-width:52em;margin:0}
+/* workspace: the Vapi config on the left, the migration on the right */
+.desk{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);grid-template-areas:"in doc" "rec doc";grid-template-rows:auto 1fr;gap:20px 24px;align-items:start;margin-top:28px;scroll-margin-top:16px}
+.compose{grid-area:in;border:1px solid var(--rule);border-radius:16px;background:#fbfaf6;padding:20px 22px;min-width:0}
+.compose label{display:block;font:500 15px/1.3 var(--sans);margin:0 0 10px}
+.compose textarea{display:block;width:100%;height:320px;resize:vertical;padding:12px 14px;border-radius:12px;font:12.5px/1.5 var(--mono);background:#fff;white-space:pre;overflow:auto}
+.act{display:flex;align-items:center;gap:12px 16px;flex-wrap:wrap;margin-top:12px}
+.go{background:var(--green);border-color:var(--green);color:#fff;min-height:46px;padding:0 26px;font-size:16px}
+.go:hover{background:var(--green-deep);border-color:var(--green-deep)}
+.kbd{font-size:13px;color:var(--ink-2)}
+.loadmsg{display:flex;align-items:flex-start;line-height:1.5;gap:8px;margin-top:12px;font-size:13.5px;color:var(--ink-2);min-height:20px}
+.loadmsg i{flex:none;width:8px;height:8px;margin-top:6px;border-radius:50%;background:var(--ink-2);opacity:.45}
+.loadmsg.busy i{animation:pulse 1.2s var(--ease) infinite}
+.loadmsg.ok i{background:var(--green);opacity:1}
+.loadmsg.err i{background:var(--ink);opacity:1;border-radius:2px}
+@keyframes pulse{50%{opacity:.1}}
+.exlab{font:500 13px/1.3 var(--sans);margin:20px 0 8px;color:var(--ink)}
+.exlist{display:flex;flex-wrap:wrap;gap:6px}
+.ex{min-height:36px;padding:0 12px;font:400 13.5px/1.2 var(--sans);gap:6px;background:#fff}
+.ex small{font-size:12.5px;color:var(--ink-2)}
+.ex[aria-pressed=true]{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+.ex[aria-pressed=true] small{color:rgb(244 242 236/.72)}
+.rec{grid-area:rec;border:1px solid var(--rule);border-radius:16px;padding:18px 22px;min-width:0}
+.rec h2,.doc h2,.doc h3{all:unset;display:block}
+.rec h2{font:500 15px/1.3 var(--sans)}
+.rec p{margin:4px 0 12px;font-size:13.5px;color:var(--ink-2)}
+.kv{display:grid;grid-template-columns:auto minmax(0,1fr);gap:3px 16px;margin:0;font:12.5px/1.55 var(--mono)}
+.kv dt{color:var(--ink-2)}
+.kv dd{margin:0;overflow-wrap:anywhere}
+.raw{margin-top:12px;font-size:13.5px}
+.raw summary{cursor:pointer;color:var(--ink-2)}
+.raw pre{font-size:11.5px;max-height:360px;overflow:auto;margin:8px 0 0}
+/* the migration document */
+.doc{grid-area:doc;border:1px solid var(--rule);border-radius:16px;background:#fff;box-shadow:0 1px 0 rgb(27 26 23/.04),0 24px 48px -32px rgb(27 26 23/.35);min-width:0;overflow:hidden}
+.doc.stale{opacity:.55;transition:opacity .2s}
+.dhead{display:flex;justify-content:space-between;align-items:flex-start;gap:12px 20px;padding:24px 28px 16px}
+.dhead>div{min-width:0}
+.doc h2{font:400 28px/1.15 var(--serif);overflow-wrap:anywhere}
+.dsub{font:12.5px/1.5 var(--mono);color:var(--ink-2);margin-top:6px}
+.status{display:inline-flex;align-items:center;min-height:30px;padding:0 14px;border-radius:999px;font:500 12.5px/1 var(--mono);letter-spacing:.04em;border:1px solid var(--ink);white-space:nowrap}
+.s-ready{background:var(--green-wash);border-color:var(--green-wash);color:var(--green)}
+.s-review{border-style:dashed}
+/* signature visual: every field read, to scale, by status */
+.fields{padding:4px 28px 18px;border-bottom:1px solid var(--rule)}
+.fbar{display:flex;height:22px;border-radius:6px;overflow:hidden;gap:2px}
+.fbar span{display:block;min-width:2px}
+.st-mapped{background:var(--green)}
+.st-adjusted{background:var(--green-wash);box-shadow:inset 0 0 0 1.5px var(--green)}
+.st-manual{background:repeating-linear-gradient(135deg,var(--ink) 0 3px,#fff 3px 6px);box-shadow:inset 0 0 0 1.5px var(--ink)}
+.st-dropped{background:#fff;box-shadow:inset 0 0 0 1.5px var(--rule)}
+.fleg{display:flex;flex-wrap:wrap;gap:6px 18px;margin:10px 0 0;padding:0;list-style:none;font-size:13.5px;color:var(--ink-2)}
+.fleg li{display:inline-flex;align-items:center;gap:8px;margin:0}
+.fleg i{width:14px;height:14px;border-radius:3px;flex:none}
+.fleg b{color:var(--ink);font-weight:500;font-variant-numeric:tabular-nums}
+.dpad{padding:6px 28px 24px}
+.part{margin-top:18px}
+.part h3{display:flex;align-items:center;gap:10px;font:500 14.5px/1.35 var(--sans);padding-bottom:8px;border-bottom:1px solid var(--ink)}
+.part h3 i{width:12px;height:12px;border-radius:3px;flex:none}
+.part ul{list-style:none;margin:0;padding:0}
+.part li{padding:10px 0;border-bottom:1px solid var(--rule);margin:0;font-size:14px}
+.part li code{font-size:12px}
+.part li .to{font:12px/1.5 var(--mono);color:var(--ink-2);margin-left:6px;overflow-wrap:anywhere}
+.part li p{margin:4px 0 0;color:var(--ink-2);font-size:13.5px}
+details.part summary{cursor:pointer;list-style:none}
+details.part summary::-webkit-details-marker{display:none}
+details.part summary h3::after{content:"Show";margin-left:auto;font:400 12.5px/1 var(--sans);color:var(--ink-2)}
+details.part[open] summary h3::after{content:"Hide"}
+.prov{display:flex;gap:8px;align-items:baseline;padding:12px 28px;border-top:1px solid var(--rule);font-size:12.5px;color:var(--ink-2);margin:0}
+.prov i{flex:none;width:7px;height:7px;border-radius:50%;background:var(--ink-2);opacity:.5}
+.prov.live i{background:var(--green);opacity:1}
+.empty{padding:48px 28px;text-align:center;color:var(--ink-2);font-size:14.5px}
+.empty b{display:block;font:400 22px/1.3 var(--serif);color:var(--ink);margin-bottom:6px}
+/* explanation below the tool */
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 270px;gap:56px;align-items:start;margin-top:16px}
+.side{position:sticky;top:24px;margin-top:64px;display:grid;gap:22px;font-size:14px;color:var(--ink-2)}
+.side h3{margin:0 0 6px;font:500 13px/1.3 var(--sans);color:var(--ink)}
+.side p{margin:0}
+.side nav a{display:block;padding:5px 0;color:var(--ink-2);text-decoration:none;border-bottom:1px solid var(--rule-soft)}
+.side nav a:hover{color:var(--ink)}
+.side pre{font-size:12px;margin:6px 0 0;white-space:pre-wrap;overflow-wrap:anywhere}
+.content section{scroll-margin-top:16px}
+.point{font-size:17px;max-width:42em;margin:0 0 20px}
+.steps{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.step{border:1px solid var(--rule);border-radius:16px;background:#fbfaf6;padding:18px 20px;min-width:0}
+.step h3{margin:0 0 6px;font:400 21px/1.25 var(--serif);display:flex;gap:10px;align-items:baseline}
+.step h3 span{font:400 15px/1 var(--serif);color:var(--green);min-width:12px}
+.step p{margin:0;font-size:14.5px;color:var(--ink-2)}
+.step p b{color:var(--ink)}
+.note{color:var(--ink-2);font-size:15px;max-width:44em;margin-top:0}
+td.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+ul.lim{margin:0;padding-left:20px;max-width:46em}
+ul.lim li{margin-bottom:10px}
+@media (max-width:1000px){
+ .layout{grid-template-columns:minmax(0,1fr);gap:0}
+ .side{position:static;margin-top:48px}
+}
+@media (max-width:860px){
+ .desk{grid-template-columns:minmax(0,1fr);grid-template-areas:"in" "doc" "rec"}
+ .compose textarea{height:220px}
+}
+@media (max-width:640px){
+ .compose{padding:16px}
+ .dhead{padding:20px 18px 12px;flex-direction:column}
+ .doc h2{font-size:24px}
+ .fields{padding:4px 18px 16px}
+ .dpad{padding:4px 18px 20px}
+ .prov{padding:12px 18px}
+ .steps{grid-template-columns:minmax(0,1fr)}
+ .rec{padding:16px}
+}
+@media (prefers-reduced-motion:reduce){.loadmsg.busy i{animation:none}}
+</style>
+</head>
+<body>
+<!-- demo-chrome --><header class="demo-top"><a class="demo-brand" href="https://pranavgudise.dev/"><svg class="demo-mark" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9.25"/><g class="n"><path class="f" d="M15.5 8.5 L 13.4 13.4 L 8.5 15.5 L 10.6 10.6 Z"/></g><circle class="p" cx="12" cy="12" r=".7"/></svg><span>Pranav Gudise</span></a><a class="pill" href="https://github.com/pg2342-hub/vapi-to-phonic">Code on GitHub</a></header><!-- /demo-chrome -->
+
+<main>
+<div class="head">
+  <h1>Vapi to Phonic</h1>
+  <p class="lead">A migration kit for moving a voice assistant from Vapi to a Phonic speech-to-speech agent. It reads the Vapi config, writes the Phonic agent and tools, and reports every field: what carries over, what changes, and what a person has to decide before the agent takes calls.</p>
+</div>
+
+<section class="desk" id="tool" aria-label="Migrate an assistant">
+  <div class="compose">
+    <label for="cfg">Vapi assistant config (JSON)</label>
+    <textarea id="cfg" spellcheck="false"></textarea>
+    <div class="act">
+      <button class="go" id="go" type="button">Migrate</button>
+      <span class="kbd">or Ctrl / Cmd + Enter</span>
+    </div>
+    <div class="loadmsg busy" id="loadmsg" role="status"><i aria-hidden="true"></i><span>Loading Python in your browser (about 10 seconds the first time). The examples work now.</span></div>
+    <div class="exlab" id="exlab">Examples</div>
+    <div class="exlist" id="exlist" role="group" aria-labelledby="exlab"></div>
+  </div>
+
+  <article class="doc" id="out" aria-live="polite"></article>
+
+  <div class="rec" id="made">
+    <h2>What gets created on Phonic</h2>
+    <p>The agent and tool bodies <code>migrate apply</code> sends to Phonic's API.</p>
+    <dl class="kv" id="kv"></dl>
+    <details class="raw"><summary>Full request bodies (JSON)</summary><pre id="rawjson"></pre></details>
+  </div>
+</section>
+
+<div class="layout">
+<div class="content">
+
+<section id="how">
+  <h2>How it works</h2>
+  <p class="point">Moving an assistant is mostly bookkeeping with a few real decisions hidden in it. The kit does the bookkeeping and puts the decisions in front of a person: a voice has to be picked by ear, a webhook server has to accept a new request shape, a transfer to a SIP line has to be set up by hand. Nothing is dropped without a line in the report.</p>
+  <div class="steps">
+    <div class="step"><h3><span>1</span>Read</h3><p><b>The Vapi config as exported.</b> Prompt, greeting, model, voice, transcriber, tools, timeouts, turn-taking, analysis plan, compliance and recording settings.</p></div>
+    <div class="step"><h3><span>2</span>Map</h3><p><b>Field by field to Phonic's agent and tools APIs.</b> Function tools become webhooks with a schema Phonic accepts; end-call phrases and closing lines move into the prompt; seconds become named turn-taking levels.</p></div>
+    <div class="step"><h3><span>3</span>Report</h3><p><b>Four statuses.</b> Mapped, adjusted, needs a person, not needed. Unknown fields are reported too. <code>apply</code> refuses to run while anything needs a person, until someone has read the list.</p></div>
+    <div class="step"><h3><span>4</span>Apply and test</h3><p><b>On a real Phonic account.</b> Creates the tools, the agent and its phone number, the extraction schema and eval prompts, then grades scripted test calls with Phonic's own evals.</p></div>
+  </div>
+</section>
+
+<section id="smoke">
+  <h2>Smoke test on live calls</h2>
+  <p class="note">Pending. The line cook screener above has been applied to a real Phonic number; the next step is 20 scripted calls (<code>agent/caller_scripts.md</code>), each graded on the 10 screening criteria by Phonic's own eval prompts. Results appear here when they are in.</p>
+</section>
+
+<section id="limits">
+  <h2>Limits</h2>
+  <ul class="lim">
+    <li>Vapi voices have no Phonic twin, so a person picks the voice by ear. The kit sets a placeholder.</li>
+    <li>Vapi and Phonic call webhooks differently. The kit moves the tool and its schema; the server behind it still has to accept Phonic's request and response.</li>
+    <li>Vapi's call-event server (status updates, end-of-call reports) and SMS tools have no direct Phonic equivalent and stay on the list for a person.</li>
+    <li>Field coverage follows the public docs of both APIs as of November 24, 2026. A field the mapper does not know is reported, never dropped silently.</li>
+  </ul>
+</section>
+</div>
+
+<aside class="side" aria-label="About this build">
+  <nav aria-label="On this page"><a href="#tool">Migrate an assistant</a><a href="#how">How it works</a><a href="#smoke">Smoke test</a><a href="#limits">Limits</a></nav>
+  <div><h3>Data</h3><p>Field names come from Vapi's public API reference (docs.vapi.ai) and Phonic's (docs.phonic.ai), read November 24, 2026. The three assistants are invented; their phone numbers (555) and URLs (example.com) are placeholders. Nothing you paste leaves your browser.</p></div>
+  <div><h3>Run it yourself</h3><p>Python 3.9+, standard library only. <code>apply</code> and <code>smoke</code> need a Phonic API key.</p><pre>python3 -m migrate plan examples/line_cook_screener.vapi.json
+python3 -m migrate apply examples/line_cook_screener.vapi.json --accept-manual
+python3 -m migrate smoke --since 2026-11-24</pre></div>
+  <div><a class="pill" href="https://github.com/pg2342-hub/vapi-to-phonic">Code on GitHub</a></div>
+</aside>
+</div>
+</main>
+<script src="https://cdn.jsdelivr.net/pyodide/v0.26.4/full/pyodide.js"></script>
+<script id="examples" type="application/json">[{"label": "Line cook screener", "tag": "the live test agent", "config": "{\n  \"name\": \"Line Cook Screener\",\n  \"firstMessage\": \"Hi, I'm Robin, an AI screener for line cook shifts, and this call is recorded. It takes about ten minutes. Are you ready to start?\",\n  \"firstMessageMode\": \"assistant-speaks-first\",\n  \"firstMessageInterruptionsEnabled\": false,\n  \"model\": {\n    \"provider\": \"openai\",\n    \"model\": \"gpt-4o\",\n    \"temperature\": 0.3,\n    \"maxTokens\": 300,\n    \"messages\": [\n      {\n        \"role\": \"system\",\n        \"content\": \"You are Robin, an AI screener for a staffing app that books hourly workers into kitchen shifts. You are screening a worker who wants to be approved for line cook shifts. Workers are often calling from home or on a break, so be warm, patient, and brief.\\n\\nYour job on every call:\\n1. Start by saying you are an AI screener and that the call is recorded. Ask if they are ready.\\n2. Ask how long they have worked as a line cook.\\n3. Ask which kitchen stations they have worked (for example grill, saute, fry, prep).\\n4. Ask whether they have a current food handler card.\\n5. Ask one follow-up about the busiest service they have worked (covers per night or tickets per hour), only if they have line cook experience.\\n6. Read back a short summary of their experience: \\\"To confirm, ...\\\" and ask if it is right.\\n7. Thank them and say they will see an update in the app. End the call.\\n\\nRules that always apply:\\n- Never tell the worker they are approved or rejected, and never promise a shift, a schedule, or a pay rate. If they ask, say the team reviews every screen and they will see the result in the app.\\n- Never ask about age, health, pregnancy, family, religion, or immigration status. If the worker brings one up, do not follow up on it; move to the next question.\\n- If the worker asks to speak with a person, tell them they can book a coach call with a person in the app, and ask whether they want to finish the screen now or stop here.\\n- If the worker asks to continue in another language, continue the rest of the call in that language.\\n- Workers often pause to remember details. Let them finish; do not start the next question while they are still mid-answer.\\n- If the worker goes quiet and does not answer a check-in, tell them they can call back any time to finish, then end the call.\\n\\nHow the review team decides (do not say this to the worker): workers with at least one year as a line cook and a current food handler card are recommended for approval; everyone else is recommended for a coach call.\\n\\nThe worker's first name is {{worker_first_name}}. They chose {{preferred_language}} as their language.\"\n      }\n    ],\n    \"tools\": [\n      {\n        \"type\": \"endCall\"\n      },\n      {\n        \"type\": \"transferCall\",\n        \"destinations\": [\n          {\n            \"type\": \"number\",\n            \"number\": \"+15555550134\",\n            \"message\": \"Connecting you to a coach now.\",\n            \"description\": \"A coach, when the worker asks for a person\"\n          }\n        ]\n      },\n      {\n        \"type\": \"function\",\n        \"async\": false,\n        \"function\": {\n          \"name\": \"save_screen_result\",\n          \"description\": \"Save the screen outcome to the worker's profile once the readback is confirmed.\",\n          \"parameters\": {\n            \"type\": \"object\",\n            \"properties\": {\n              \"years_line_cook\": {\n                \"type\": \"number\",\n                \"description\": \"Years worked as a line cook\"\n              },\n              \"stations\": {\n                \"type\": \"array\",\n                \"items\": {\n                  \"type\": \"string\"\n                },\n                \"description\": \"Stations the worker named\"\n              },\n              \"has_current_food_handler_card\": {\n                \"type\": \"boolean\"\n              },\n              \"recommendation\": {\n                \"type\": \"string\",\n                \"enum\": [\n                  \"approve\",\n                  \"coach_call\"\n                ]\n              }\n            },\n            \"required\": [\n              \"years_line_cook\",\n              \"recommendation\"\n            ]\n          }\n        },\n        \"server\": {\n          \"url\": \"https://screening.example.com/vapi/save-screen\"\n        }\n      },\n      {\n        \"type\": \"sms\",\n        \"metadata\": {\n          \"from\": \"+15555550100\"\n        }\n      }\n    ]\n  },\n  \"voice\": {\n    \"provider\": \"11labs\",\n    \"voiceId\": \"21m00Tcm4TlvDq8ikWAM\",\n    \"speed\": 1.0\n  },\n  \"transcriber\": {\n    \"provider\": \"deepgram\",\n    \"model\": \"nova-3\",\n    \"language\": \"en\",\n    \"keyterm\": [\n      \"food handler card\",\n      \"saute\",\n      \"garde manger\",\n      \"expo\",\n      \"covers\"\n    ]\n  },\n  \"endCallMessage\": \"Thanks for your time. You'll see the result in the app soon. Goodbye!\",\n  \"endCallPhrases\": [\n    \"goodbye\",\n    \"bye for now\"\n  ],\n  \"voicemailDetection\": \"off\",\n  \"silenceTimeoutSeconds\": 30,\n  \"maxDurationSeconds\": 1200,\n  \"backgroundSound\": \"off\",\n  \"messagePlan\": {\n    \"idleMessages\": [\n      \"Are you still there?\"\n    ],\n    \"idleTimeoutSeconds\": 8,\n    \"idleMessageMaxSpokenCount\": 2\n  },\n  \"startSpeakingPlan\": {\n    \"waitSeconds\": 0.8\n  },\n  \"stopSpeakingPlan\": {\n    \"numWords\": 2,\n    \"voiceSeconds\": 0.2,\n    \"backoffSeconds\": 1\n  },\n  \"artifactPlan\": {\n    \"recordingEnabled\": true\n  },\n  \"compliancePlan\": {\n    \"hipaaEnabled\": false\n  },\n  \"analysisPlan\": {\n    \"structuredDataPlan\": {\n      \"enabled\": true,\n      \"schema\": {\n        \"type\": \"object\",\n        \"properties\": {\n          \"screen_completed\": {\n            \"type\": \"boolean\",\n            \"description\": \"True if the screener asked its questions and read back a summary before the call ended.\"\n          },\n          \"years_line_cook\": {\n            \"type\": \"number\",\n            \"description\": \"Years the worker said they worked as a line cook. 0 if none.\"\n          },\n          \"has_current_food_handler_card\": {\n            \"type\": \"boolean\",\n            \"description\": \"True only if the worker said their food handler card is current.\"\n          },\n          \"stations\": {\n            \"type\": \"array\",\n            \"items\": {\n              \"type\": \"string\"\n            },\n            \"description\": \"Kitchen stations the worker named.\"\n          },\n          \"recommendation\": {\n            \"type\": \"string\",\n            \"description\": \"approve if at least 1 year and a current card, else coach_call; none if the screen did not finish.\"\n          }\n        }\n      }\n    },\n    \"successEvaluationPlan\": {\n      \"enabled\": true,\n      \"rubric\": \"PassFail\",\n      \"messages\": [\n        {\n          \"role\": \"system\",\n          \"content\": \"Pass if the screener disclosed it is an AI and the call is recorded, asked every screening question, read back a summary, and never promised approval, shifts or pay.\"\n        }\n      ]\n    }\n  },\n  \"server\": {\n    \"url\": \"https://screening.example.com/vapi/events\"\n  },\n  \"metadata\": {\n    \"position\": \"line_cook\"\n  }\n}", "result": {"agent": {"slug": "line-cook-screener", "phone_number": "assign-automatically", "model": "phonic-1", "name": "line-cook-screener", "template_variables": {"preferred_language": {"default_value": ""}, "worker_first_name": {"default_value": ""}}, "welcome_message": "Hi, I'm Robin, an AI screener for line cook shifts, and this call is recorded. It takes about ten minutes. Are you ready to start?", "generate_welcome_message": false, "is_welcome_message_interruptible": false, "voice_id": "sabrina", "default_language": "en", "boosted_keywords": ["food handler card", "saute", "garde manger", "expo", "covers"], "detect_voicemail_tone": false, "max_conversation_duration_sec": 1200, "no_input_end_conversation_sec": 30, "no_input_poke_text": "Are you still there?", "no_input_poke_sec": 8, "turn_taking": "relaxed", "min_words_to_interrupt": 2, "tools": ["natural_conversation_ending", "line_cook_screener_transfer", "line_cook_screener_save_screen_result"], "system_prompt": "You are Robin, an AI screener for a staffing app that books hourly workers into kitchen shifts. You are screening a worker who wants to be approved for line cook shifts. Workers are often calling from home or on a break, so be warm, patient, and brief.\n\nYour job on every call:\n1. Start by saying you are an AI screener and that the call is recorded. Ask if they are ready.\n2. Ask how long they have worked as a line cook.\n3. Ask which kitchen stations they have worked (for example grill, saute, fry, prep).\n4. Ask whether they have a current food handler card.\n5. Ask one follow-up about the busiest service they have worked (covers per night or tickets per hour), only if they have line cook experience.\n6. Read back a short summary of their experience: \"To confirm, ...\" and ask if it is right.\n7. Thank them and say they will see an update in the app. End the call.\n\nRules that always apply:\n- Never tell the worker they are approved or rejected, and never promise a shift, a schedule, or a pay rate. If they ask, say the team reviews every screen and they will see the result in the app.\n- Never ask about age, health, pregnancy, family, religion, or immigration status. If the worker brings one up, do not follow up on it; move to the next question.\n- If the worker asks to speak with a person, tell them they can book a coach call with a person in the app, and ask whether they want to finish the screen now or stop here.\n- If the worker asks to continue in another language, continue the rest of the call in that language.\n- Workers often pause to remember details. Let them finish; do not start the next question while they are still mid-answer.\n- If the worker goes quiet and does not answer a check-in, tell them they can call back any time to finish, then end the call.\n\nHow the review team decides (do not say this to the worker): workers with at least one year as a line cook and a current food handler card are recommended for approval; everyone else is recommended for a coach call.\n\nThe worker's first name is {{worker_first_name}}. They chose {{preferred_language}} as their language.\n\n- Before transferring with line_cook_screener_transfer, say: \"Connecting you to a coach now.\"\n- End the call when the caller says: \"goodbye\", \"bye for now\".\n- Right before you end the call, say: \"Thanks for your time. You'll see the result in the app soon. Goodbye!\""}, "tools": [{"name": "line_cook_screener_transfer", "description": "A coach, when the worker asks for a person", "type": "built_in_transfer_to_phone_number", "execution_mode": "sync", "phone_number": "+15555550134"}, {"name": "line_cook_screener_save_screen_result", "description": "Save the screen outcome to the worker's profile once the readback is confirmed.", "type": "custom_webhook", "execution_mode": "sync", "parameters": {"type": "object", "properties": {"years_line_cook": {"type": "number", "description": "Years worked as a line cook"}, "stations": {"type": "array", "items": {"type": "string"}, "description": "Stations the worker named"}, "has_current_food_handler_card": {"type": "boolean"}, "recommendation": {"type": "string", "enum": ["approve", "coach_call"]}}, "required": ["years_line_cook", "recommendation"], "additionalProperties": false}, "require_speech_before_tool_call": true, "endpoint_method": "POST", "endpoint_url": "https://screening.example.com/vapi/save-screen", "parameter_locations": {"years_line_cook": "request_body", "stations": "request_body", "has_current_food_handler_card": "request_body", "recommendation": "request_body"}}], "schema": {"name": "migrated-structured-data", "prompt": "Extract these fields from the conversation.", "fields": [{"name": "screen_completed", "type": "bool", "description": "True if the screener asked its questions and read back a summary before the call ended."}, {"name": "years_line_cook", "type": "float", "description": "Years the worker said they worked as a line cook. 0 if none."}, {"name": "has_current_food_handler_card", "type": "bool", "description": "True only if the worker said their food handler card is current."}, {"name": "stations", "type": "string[]", "description": "Kitchen stations the worker named."}, {"name": "recommendation", "type": "string", "description": "approve if at least 1 year and a current card, else coach_call; none if the screen did not finish."}]}, "evals": [{"name": "vapi-success-evaluation", "prompt": "Pass if the screener disclosed it is an AI and the call is recorded, asked every screening question, read back a summary, and never promised approval, shifts or pay."}], "report": [{"vapi": "name", "status": "adjusted", "phonic": "slug", "note": "Phonic agent names are lowercase slugs: 'line-cook-screener'."}, {"vapi": "model.messages[system]", "status": "mapped", "phonic": "system_prompt", "note": "System prompt carried over as is."}, {"vapi": "model.provider / model.model", "status": "dropped", "phonic": "model", "note": "openai gpt-4o is replaced by Phonic-1, one speech-to-speech model."}, {"vapi": "model.temperature", "status": "dropped", "phonic": null, "note": "Phonic-1 does not expose this setting."}, {"vapi": "model.maxTokens", "status": "dropped", "phonic": null, "note": "Phonic-1 does not expose this setting."}, {"vapi": "model.tools[0] (endCall)", "status": "mapped", "phonic": "natural_conversation_ending", "note": "Phonic's built-in natural conversation ending."}, {"vapi": "model.tools[1].destinations[0]", "status": "mapped", "phonic": "line_cook_screener_transfer", "note": "Phonic built-in transfer to the same number."}, {"vapi": "model.tools[2] (function line_cook_screener_save_screen_result)", "status": "adjusted", "phonic": "line_cook_screener_save_screen_result", "note": "Becomes a Phonic custom_webhook tool posting the same arguments. Vapi wraps calls in a message envelope and expects {\"results\": [...]} back; check the server handles Phonic's request and response shape."}, {"vapi": "model.tools[3] (sms)", "status": "manual", "phonic": null, "note": "No Phonic equivalent for Vapi's 'sms' tool."}, {"vapi": "{{variables}}", "status": "adjusted", "phonic": "template_variables", "note": "Same {{name}} syntax on Phonic. Declared with empty defaults; pass real values per call (Vapi: assistantOverrides.variableValues)."}, {"vapi": "firstMessage / firstMessageMode", "status": "mapped", "phonic": "welcome_message", "note": "Same greeting, spoken first."}, {"vapi": "firstMessageInterruptionsEnabled", "status": "mapped", "phonic": "is_welcome_message_interruptible", "note": "Same setting."}, {"vapi": "voice", "status": "manual", "phonic": "voice_id", "note": "11labs voice 21m00Tcm4TlvDq8ikWAM has no Phonic twin. Pick a Phonic voice by ear (default here: sabrina)."}, {"vapi": "voice.speed", "status": "manual", "phonic": "audio_speed", "note": "Speed scales differ (Phonic's default is 1.2); left at Phonic's default. Adjust by ear."}, {"vapi": "transcriber.language", "status": "mapped", "phonic": "default_language", "note": "Default language 'en'."}, {"vapi": "transcriber keywords", "status": "mapped", "phonic": "boosted_keywords", "note": "5 keywords boosted."}, {"vapi": "transcriber.provider / model", "status": "dropped", "phonic": null, "note": "deepgram transcription is replaced by Phonic-1 hearing audio directly."}, {"vapi": "endCallPhrases", "status": "adjusted", "phonic": "natural_conversation_ending + system_prompt", "note": "Phonic ends calls with a built-in tool; the phrases are added to the prompt as the cue."}, {"vapi": "endCallMessage", "status": "adjusted", "phonic": "system_prompt", "note": "No closing-line field on Phonic; added to the prompt."}, {"vapi": "voicemailDetection", "status": "mapped", "phonic": "detect_voicemail_tone", "note": "Phonic listens for the beep on outbound calls only."}, {"vapi": "maxDurationSeconds", "status": "mapped", "phonic": "max_conversation_duration_sec", "note": "Same cap."}, {"vapi": "silenceTimeoutSeconds", "status": "mapped", "phonic": "no_input_end_conversation_sec", "note": "Same silence limit."}, {"vapi": "messagePlan.idleMessages", "status": "adjusted", "phonic": "no_input_poke_text, no_input_poke_sec", "note": "Phonic has one silence prompt; the first idle message is used. Vapi's limit on how many times it is spoken does not carry over."}, {"vapi": "backgroundSound", "status": "mapped", "phonic": "background_noise", "note": "No background noise."}, {"vapi": "startSpeakingPlan.waitSeconds", "status": "adjusted", "phonic": "turn_taking", "note": "0.8 s wait becomes Phonic's 'relaxed' turn-taking. Phonic uses named levels, not seconds."}, {"vapi": "stopSpeakingPlan.numWords", "status": "mapped", "phonic": "min_words_to_interrupt", "note": "Words before the caller can interrupt."}, {"vapi": "stopSpeakingPlan.voiceSeconds", "status": "dropped", "phonic": null, "note": "No Phonic setting; Phonic-1 handles barge-in from audio."}, {"vapi": "stopSpeakingPlan.backoffSeconds", "status": "dropped", "phonic": null, "note": "No Phonic setting; Phonic-1 handles barge-in from audio."}, {"vapi": "artifactPlan.recordingEnabled", "status": "mapped", "phonic": null, "note": "Phonic records calls by default."}, {"vapi": "compliancePlan", "status": "mapped", "phonic": null, "note": "No HIPAA mode needed."}, {"vapi": "analysisPlan.structuredDataPlan", "status": "mapped", "phonic": "extraction_schemas", "note": "Becomes a Phonic extraction schema."}, {"vapi": "analysisPlan.successEvaluationPlan", "status": "mapped", "phonic": "conversation_eval_prompts", "note": "Becomes a Phonic conversation eval prompt."}, {"vapi": "server", "status": "manual", "phonic": null, "note": "Vapi posts call events (status, end-of-call report) to this URL. Point that integration at Phonic's conversation API or webhooks instead."}, {"vapi": "metadata", "status": "dropped", "phonic": null, "note": "Keep it in your own system; Phonic agents have no metadata field."}], "counts": {"mapped": 16, "adjusted": 7, "manual": 4, "dropped": 7}}}, {"label": "Clinic front desk", "tag": "HIPAA, SIP transfer", "config": "{\n  \"name\": \"Clinic Front Desk\",\n  \"firstMessage\": \"Thanks for calling the family clinic. This call may be recorded. How can I help today?\",\n  \"model\": {\n    \"provider\": \"anthropic\",\n    \"model\": \"claude-sonnet-4-5\",\n    \"temperature\": 0.2,\n    \"messages\": [\n      {\n        \"role\": \"system\",\n        \"content\": \"You are the after-hours front desk for a family clinic. Book, move or cancel appointments using the scheduling tools. Never give medical advice. If the caller describes an emergency, tell them to hang up and call 911. Today is {{today}}.\"\n      }\n    ],\n    \"toolIds\": [\n      \"8f2c1a7e-0000-4000-8000-000000000001\"\n    ],\n    \"tools\": [\n      {\n        \"type\": \"function\",\n        \"function\": {\n          \"name\": \"find_open_slots\",\n          \"description\": \"Find open appointment slots\",\n          \"parameters\": {\n            \"type\": \"object\",\n            \"properties\": {\n              \"provider_id\": {\n                \"type\": \"string\"\n              },\n              \"date\": {\n                \"type\": [\n                  \"string\",\n                  \"null\"\n                ],\n                \"format\": \"date\"\n              },\n              \"conversation_id\": {\n                \"type\": \"string\"\n              }\n            },\n            \"required\": [\n              \"provider_id\",\n              \"conversation_id\"\n            ]\n          }\n        },\n        \"server\": {\n          \"url\": \"https://scheduling.example.com/vapi/slots\"\n        }\n      },\n      {\n        \"type\": \"transferCall\",\n        \"destinations\": [\n          {\n            \"type\": \"number\",\n            \"number\": \"+15555550188\",\n            \"message\": \"Transferring you to the nurse line.\",\n            \"description\": \"Nurse line for symptom questions\"\n          },\n          {\n            \"type\": \"sip\",\n            \"sipUri\": \"sip:oncall@pbx.example.com\",\n            \"description\": \"On-call physician\"\n          }\n        ]\n      },\n      {\n        \"type\": \"dtmf\"\n      }\n    ]\n  },\n  \"voice\": {\n    \"provider\": \"cartesia\",\n    \"voiceId\": \"a0e99841-438c-4a64-b679-ae501e7d6091\"\n  },\n  \"transcriber\": {\n    \"provider\": \"deepgram\",\n    \"model\": \"nova-3\",\n    \"language\": \"en-US\",\n    \"keywords\": [\n      \"pediatrics:2\",\n      \"copay\",\n      \"telehealth\"\n    ]\n  },\n  \"backgroundSound\": \"office\",\n  \"compliancePlan\": {\n    \"hipaaEnabled\": true\n  },\n  \"artifactPlan\": {\n    \"recordingEnabled\": false\n  },\n  \"startSpeakingPlan\": {\n    \"waitSeconds\": 0.4,\n    \"smartEndpointingPlan\": {\n      \"provider\": \"livekit\"\n    }\n  },\n  \"analysisPlan\": {\n    \"summaryPlan\": {\n      \"enabled\": true\n    },\n    \"successEvaluationPlan\": {\n      \"enabled\": true,\n      \"rubric\": \"PassFail\"\n    }\n  },\n  \"endCallFunctionEnabled\": true\n}", "result": {"agent": {"slug": "clinic-front-desk", "phone_number": "assign-automatically", "model": "phonic-1", "name": "clinic-front-desk", "template_variables": {"today": {"default_value": ""}}, "welcome_message": "Thanks for calling the family clinic. This call may be recorded. How can I help today?", "generate_welcome_message": false, "voice_id": "sabrina", "default_language": "en", "boosted_keywords": ["pediatrics", "copay", "telehealth"], "background_noise": "office", "background_noise_level": 0.1, "turn_taking": "standard", "data_retention_policy": {"zero_data_retention": false, "transcripts": {"delete_after_hours": null}, "audio_recordings": {"delete_after_hours": 0}}, "enable_redaction": true, "tools": ["clinic_front_desk_find_open_slots", "clinic_front_desk_transfer_1"], "system_prompt": "You are the after-hours front desk for a family clinic. Book, move or cancel appointments using the scheduling tools. Never give medical advice. If the caller describes an emergency, tell them to hang up and call 911. Today is {{today}}.\n\n- Before transferring with clinic_front_desk_transfer_1, say: \"Transferring you to the nurse line.\""}, "tools": [{"name": "clinic_front_desk_find_open_slots", "description": "Find open appointment slots", "type": "custom_webhook", "execution_mode": "sync", "parameters": {"type": "object", "properties": {"provider_id": {"type": "string"}, "date": {"anyOf": [{"type": "string"}, {"type": "null"}]}, "conversation_id_value": {"type": "string"}}, "required": ["provider_id", "conversation_id_value"], "additionalProperties": false}, "require_speech_before_tool_call": true, "endpoint_method": "POST", "endpoint_url": "https://scheduling.example.com/vapi/slots", "parameter_locations": {"provider_id": "request_body", "date": "request_body", "conversation_id_value": "request_body"}}, {"name": "clinic_front_desk_transfer_1", "description": "Nurse line for symptom questions", "type": "built_in_transfer_to_phone_number", "execution_mode": "sync", "phone_number": "+15555550188"}], "schema": null, "evals": [], "report": [{"vapi": "name", "status": "adjusted", "phonic": "slug", "note": "Phonic agent names are lowercase slugs: 'clinic-front-desk'."}, {"vapi": "model.messages[system]", "status": "mapped", "phonic": "system_prompt", "note": "System prompt carried over as is."}, {"vapi": "model.provider / model.model", "status": "dropped", "phonic": "model", "note": "anthropic claude-sonnet-4-5 is replaced by Phonic-1, one speech-to-speech model."}, {"vapi": "model.temperature", "status": "dropped", "phonic": null, "note": "Phonic-1 does not expose this setting."}, {"vapi": "model.toolIds", "status": "manual", "phonic": null, "note": "Tools stored separately on Vapi; export each one into model.tools and re-run."}, {"vapi": "model.tools[0] (function clinic_front_desk_find_open_slots).parameters.date.type", "status": "adjusted", "phonic": null, "note": "Type list rewritten as anyOf, which is the form Phonic accepts."}, {"vapi": "model.tools[0] (function clinic_front_desk_find_open_slots).parameters.date.format", "status": "dropped", "phonic": null, "note": "Phonic's tool schemas do not support 'format'."}, {"vapi": "model.tools[0] (function clinic_front_desk_find_open_slots).conversation_id", "status": "adjusted", "phonic": null, "note": "'conversation_id' is reserved on Phonic; renamed to 'conversation_id_value'. Update the server."}, {"vapi": "model.tools[0] (function clinic_front_desk_find_open_slots)", "status": "adjusted", "phonic": "clinic_front_desk_find_open_slots", "note": "Becomes a Phonic custom_webhook tool posting the same arguments. Vapi wraps calls in a message envelope and expects {\"results\": [...]} back; check the server handles Phonic's request and response shape."}, {"vapi": "model.tools[1].destinations[0]", "status": "mapped", "phonic": "clinic_front_desk_transfer_1", "note": "Phonic built-in transfer to the same number."}, {"vapi": "model.tools[1].destinations[1]", "status": "manual", "phonic": null, "note": "Only phone-number destinations carry over; set up SIP and assistant transfers by hand."}, {"vapi": "model.tools[2] (dtmf)", "status": "manual", "phonic": null, "note": "Vapi sends keypad tones; Phonic's keypad_input reads tones from the caller. Use a transfer tool with dtmf digits if the goal is to navigate a phone menu."}, {"vapi": "{{variables}}", "status": "adjusted", "phonic": "template_variables", "note": "Same {{name}} syntax on Phonic. Declared with empty defaults; pass real values per call (Vapi: assistantOverrides.variableValues)."}, {"vapi": "firstMessage / firstMessageMode", "status": "mapped", "phonic": "welcome_message", "note": "Same greeting, spoken first."}, {"vapi": "voice", "status": "manual", "phonic": "voice_id", "note": "cartesia voice a0e99841-438c-4a64-b679-ae501e7d6091 has no Phonic twin. Pick a Phonic voice by ear (default here: sabrina)."}, {"vapi": "transcriber.language", "status": "mapped", "phonic": "default_language", "note": "Default language 'en'."}, {"vapi": "transcriber keywords", "status": "mapped", "phonic": "boosted_keywords", "note": "3 keywords boosted."}, {"vapi": "transcriber.provider / model", "status": "dropped", "phonic": null, "note": "deepgram transcription is replaced by Phonic-1 hearing audio directly."}, {"vapi": "backgroundSound", "status": "adjusted", "phonic": "background_noise", "note": "Office noise at a low level (0.1); tune by ear."}, {"vapi": "startSpeakingPlan.waitSeconds", "status": "adjusted", "phonic": "turn_taking", "note": "0.4 s wait becomes Phonic's 'standard' turn-taking. Phonic uses named levels, not seconds."}, {"vapi": "startSpeakingPlan.smartEndpointingPlan", "status": "dropped", "phonic": null, "note": "Phonic-1 decides turn ends from audio; use turn_taking."}, {"vapi": "artifactPlan.recordingEnabled", "status": "adjusted", "phonic": "data_retention_policy", "note": "Phonic always records; audio is deleted right after the call instead."}, {"vapi": "compliancePlan.hipaaEnabled", "status": "manual", "phonic": "enable_redaction", "note": "Redaction is turned on; a HIPAA agreement and retention policy have to be set up with Phonic before go-live."}, {"vapi": "analysisPlan.successEvaluationPlan", "status": "manual", "phonic": "conversation_eval_prompts", "note": "Uses Vapi's default rubric text; write the pass rule out as an eval prompt."}, {"vapi": "analysisPlan.summaryPlan", "status": "manual", "phonic": null, "note": "Write the summary as an extraction field if it is needed."}, {"vapi": "endCallFunctionEnabled", "status": "manual", "phonic": null, "note": "Not recognised by the mapper; review by hand."}], "counts": {"mapped": 5, "adjusted": 8, "manual": 8, "dropped": 5}}}, {"label": "Bilingual store support", "tag": "waits for the caller", "config": "{\n  \"name\": \"Tienda Soporte\",\n  \"firstMessageMode\": \"assistant-waits-for-user\",\n  \"model\": {\n    \"provider\": \"openai\",\n    \"model\": \"gpt-4o-mini\",\n    \"messages\": [\n      {\n        \"role\": \"system\",\n        \"content\": \"You answer order-status questions for an online store in English or Spanish, matching the caller. Look orders up with lookup_order. Hand billing disputes to a person.\"\n      }\n    ],\n    \"tools\": [\n      {\n        \"type\": \"function\",\n        \"async\": true,\n        \"function\": {\n          \"name\": \"lookup_order\",\n          \"description\": \"Look up an order by number\",\n          \"parameters\": {\n            \"type\": \"object\",\n            \"properties\": {\n              \"order_number\": {\n                \"type\": \"string\"\n              },\n              \"items\": {\n                \"type\": \"array\",\n                \"items\": {\n                  \"type\": \"object\",\n                  \"properties\": {\n                    \"sku\": {\n                      \"type\": \"string\"\n                    }\n                  }\n                }\n              }\n            },\n            \"required\": [\n              \"order_number\"\n            ]\n          }\n        },\n        \"server\": {\n          \"url\": \"https://store.example.com/vapi/orders\"\n        }\n      },\n      {\n        \"type\": \"transferCall\",\n        \"destinations\": [\n          {\n            \"type\": \"number\",\n            \"number\": \"+15555550142\",\n            \"description\": \"Billing team\"\n          }\n        ]\n      },\n      {\n        \"type\": \"endCall\"\n      }\n    ]\n  },\n  \"voice\": {\n    \"provider\": \"azure\",\n    \"voiceId\": \"es-MX-DaliaNeural\",\n    \"speed\": 1.1\n  },\n  \"transcriber\": {\n    \"provider\": \"deepgram\",\n    \"model\": \"nova-3\",\n    \"language\": \"multi\"\n  },\n  \"voicemailDetection\": {\n    \"provider\": \"vapi\"\n  },\n  \"voicemailMessage\": \"Hi, this is the store calling about your order. Please call us back when you can.\",\n  \"maxDurationSeconds\": 600,\n  \"backgroundSound\": \"https://cdn.example.com/store-ambience.mp3\",\n  \"stopSpeakingPlan\": {\n    \"numWords\": 0,\n    \"acknowledgementPhrases\": [\n      \"okay\",\n      \"s\\u00ed\"\n    ]\n  },\n  \"hooks\": [\n    {\n      \"on\": \"call.ending\",\n      \"do\": [\n        {\n          \"type\": \"tool\",\n          \"toolId\": \"abc\"\n        }\n      ]\n    }\n  ]\n}", "result": {"agent": {"slug": "tienda-soporte", "phone_number": "assign-automatically", "model": "phonic-1", "name": "tienda-soporte", "generate_welcome_message": false, "welcome_message": null, "voice_id": "sabrina", "default_language": "en", "multilingual_mode": "auto", "detect_voicemail_tone": true, "max_conversation_duration_sec": 600, "min_words_to_interrupt": 1, "tools": ["natural_conversation_ending", "tienda_soporte_lookup_order", "tienda_soporte_transfer"], "system_prompt": "You answer order-status questions for an online store in English or Spanish, matching the caller. Look orders up with lookup_order. Hand billing disputes to a person.\n\n- If you reach voicemail, leave this message and end the call: \"Hi, this is the store calling about your order. Please call us back when you can.\""}, "tools": [{"name": "tienda_soporte_lookup_order", "description": "Look up an order by number", "type": "custom_webhook", "execution_mode": "async", "parameters": {"type": "object", "properties": {"order_number": {"type": "string"}, "items": {"type": "array", "items": {"type": "object", "properties": {"sku": {"type": "string"}}, "additionalProperties": false, "required": []}}}, "required": ["order_number"], "additionalProperties": false}, "require_speech_before_tool_call": true, "endpoint_method": "POST", "endpoint_url": "https://store.example.com/vapi/orders", "parameter_locations": {"order_number": "request_body", "items": "request_body"}}, {"name": "tienda_soporte_transfer", "description": "Billing team", "type": "built_in_transfer_to_phone_number", "execution_mode": "sync", "phone_number": "+15555550142"}], "schema": null, "evals": [], "report": [{"vapi": "name", "status": "adjusted", "phonic": "slug", "note": "Phonic agent names are lowercase slugs: 'tienda-soporte'."}, {"vapi": "model.messages[system]", "status": "mapped", "phonic": "system_prompt", "note": "System prompt carried over as is."}, {"vapi": "model.provider / model.model", "status": "dropped", "phonic": "model", "note": "openai gpt-4o-mini is replaced by Phonic-1, one speech-to-speech model."}, {"vapi": "model.tools[0] (function tienda_soporte_lookup_order)", "status": "adjusted", "phonic": "tienda_soporte_lookup_order", "note": "Becomes a Phonic custom_webhook tool posting the same arguments. Vapi wraps calls in a message envelope and expects {\"results\": [...]} back; check the server handles Phonic's request and response shape."}, {"vapi": "model.tools[1].destinations[0]", "status": "mapped", "phonic": "tienda_soporte_transfer", "note": "Phonic built-in transfer to the same number."}, {"vapi": "model.tools[2] (endCall)", "status": "mapped", "phonic": "natural_conversation_ending", "note": "Phonic's built-in natural conversation ending."}, {"vapi": "firstMessageMode", "status": "manual", "phonic": "welcome_message", "note": "Phonic agents greet first; check the flow works with a greeting, or keep the greeting very short."}, {"vapi": "voice", "status": "manual", "phonic": "voice_id", "note": "azure voice es-MX-DaliaNeural has no Phonic twin. Pick a Phonic voice by ear (default here: sabrina)."}, {"vapi": "voice.speed", "status": "manual", "phonic": "audio_speed", "note": "Speed scales differ (Phonic's default is 1.2); left at Phonic's default. Adjust by ear."}, {"vapi": "transcriber.language", "status": "adjusted", "phonic": "multilingual_mode", "note": "'multi' becomes English by default with automatic language detection. Add the expected languages to additional_languages."}, {"vapi": "transcriber.provider / model", "status": "dropped", "phonic": null, "note": "deepgram transcription is replaced by Phonic-1 hearing audio directly."}, {"vapi": "voicemailMessage", "status": "adjusted", "phonic": "system_prompt", "note": "Added to the prompt; Phonic detects the voicemail beep on outbound calls."}, {"vapi": "voicemailDetection", "status": "mapped", "phonic": "detect_voicemail_tone", "note": "Phonic listens for the beep on outbound calls only."}, {"vapi": "maxDurationSeconds", "status": "mapped", "phonic": "max_conversation_duration_sec", "note": "Same cap."}, {"vapi": "backgroundSound", "status": "manual", "phonic": "background_noise", "note": "'https://cdn.example.com/store-ambience.mp3' is not one of Phonic's noises (office, call-center, coffee-shop)."}, {"vapi": "stopSpeakingPlan.numWords", "status": "mapped", "phonic": "min_words_to_interrupt", "note": "Words before the caller can interrupt."}, {"vapi": "stopSpeakingPlan.acknowledgementPhrases", "status": "dropped", "phonic": null, "note": "No Phonic setting; Phonic-1 handles barge-in from audio."}, {"vapi": "hooks", "status": "manual", "phonic": null, "note": "Vapi platform setting with no Phonic agent field."}], "counts": {"mapped": 6, "adjusted": 4, "manual": 5, "dropped": 3}}}]</script>
+<script>
+// The examples are precomputed by scripts/build_demo.py with migrate/mapper.py; a pasted config
+// runs through the same mapper.py in the browser (Pyodide).
+const EXAMPLES = JSON.parse(document.getElementById("examples").textContent);
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const LABEL = {manual: "Needs a person", adjusted: "Adjusted on the way", mapped: "Mapped as is", dropped: "Not needed on Phonic"};
+const SHORT = {manual: "need a person", adjusted: "adjusted", mapped: "mapped", dropped: "not needed"};
+const ORDER = ["manual", "adjusted", "mapped", "dropped"];
+let py = null, pending = false, failed = false;
+
+const exlist = $("#exlist");
+EXAMPLES.forEach(ex => {
+  const b = document.createElement("button");
+  b.type = "button"; b.className = "ex"; b.setAttribute("aria-pressed", "false");
+  b.innerHTML = esc(ex.label) + "<small>" + esc(ex.tag) + "</small>";
+  b.addEventListener("click", () => { $("#cfg").value = ex.config; run(); });
+  exlist.appendChild(b);
+});
+function markChip(){
+  const v = $("#cfg").value.trim();
+  [...exlist.children].forEach((b, i) => b.setAttribute("aria-pressed", String(EXAMPLES[i].config.trim() === v)));
+}
+
+function render(res, cfg, live){
+  const c = res.counts, total = ORDER.reduce((s, k) => s + c[k], 0);
+  const review = c.manual > 0;
+  let h = `<header class="dhead"><div><h2>Phonic agent ${esc(res.agent.slug)}</h2>` +
+    `<div class="dsub">from Vapi assistant "${esc(cfg.name || "unnamed")}" · ${total} fields reported · ${res.tools.length} tool${res.tools.length === 1 ? "" : "s"} to create</div></div>` +
+    `<span class="status ${review ? "s-review" : "s-ready"}">${review ? c.manual + " TO REVIEW" : "READY TO APPLY"}</span></header>`;
+  h += `<div class="fields"><div class="fbar" role="img" aria-label="${ORDER.map(k => c[k] + " " + SHORT[k]).join(", ")}">` +
+    ORDER.filter(k => c[k]).map(k => `<span class="st-${k}" style="flex:${c[k]} 0 0"></span>`).join("") + `</div>` +
+    `<ul class="fleg">` + ORDER.map(k => `<li><i class="st-${k}"></i><b>${c[k]}</b> ${SHORT[k]}</li>`).join("") + `</ul></div>`;
+  h += `<div class="dpad">`;
+  for (const k of ORDER){
+    const items = res.report.filter(i => i.status === k);
+    if (!items.length) continue;
+    const list = `<ul>` + items.map(i => `<li><code>${esc(i.vapi)}</code>${i.phonic ? `<span class="to">to ${esc(i.phonic)}</span>` : ""}<p>${esc(i.note)}</p></li>`).join("") + `</ul>`;
+    const head = `<h3><i class="st-${k}"></i>${LABEL[k]} (${items.length})</h3>`;
+    h += (k === "manual" || k === "adjusted") ? `<div class="part">${head}${list}</div>`
+      : `<details class="part"><summary>${head}</summary>${list}</details>`;
+  }
+  h += `</div><p class="prov${live ? " live" : ""}"><i></i>${live ? "Mapped just now in your browser by migrate/mapper.py." : "Precomputed by migrate/mapper.py, the same code the CLI runs."}</p>`;
+  $("#out").classList.remove("stale");
+  $("#out").innerHTML = h;
+  const a = res.agent;
+  const kv = [["name", a.slug], ["phone_number", a.phone_number], ["voice_id", a.voice_id], ["default_language", a.default_language || "en"],
+    ["turn_taking", a.turn_taking || "standard"], ["welcome_message", a.generate_welcome_message ? "(generated)" : a.welcome_message],
+    ["tools", (a.tools || []).join(", ") || "none"], ["template_variables", Object.keys(a.template_variables || {}).join(", ") || "none"],
+    ["extraction fields", res.schema ? res.schema.fields.map(f => f.name).join(", ") : "none"], ["eval prompts", String(res.evals.length)]];
+  $("#kv").innerHTML = kv.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v == null ? "null" : v)}</dd>`).join("");
+  $("#rawjson").textContent = JSON.stringify({agent: a, tools: res.tools, extraction_schema: res.schema, eval_prompts: res.evals}, null, 2);
+  markChip();
+}
+
+function setMsg(cls, text){ const m = $("#loadmsg"); m.className = "loadmsg " + cls; m.querySelector("span").textContent = text; }
+function fail(title, msg){ $("#out").classList.remove("stale"); $("#out").innerHTML = `<div class="empty"><b>${esc(title)}</b>${esc(msg)}</div>`; markChip(); }
+
+function run(){
+  const text = $("#cfg").value.trim();
+  if (!text) return;
+  let cfg;
+  try { cfg = JSON.parse(text); } catch (e) { return fail("That is not valid JSON", e.message); }
+  if (!cfg || typeof cfg !== "object" || Array.isArray(cfg)) return fail("Expected one assistant object", "Paste the JSON of a single Vapi assistant.");
+  const ex = EXAMPLES.find(e => e.config.trim() === text);
+  if (!py){
+    if (ex){ pending = false; return render(ex.result, cfg, false); }
+    if (failed){ markChip(); return setMsg("err", "Python did not load, so only the examples can be shown. Reload, or run python3 -m migrate plan on your config."); }
+    pending = true; $("#out").classList.add("stale"); markChip();
+    return setMsg("busy", "Python is still loading. Your config will be mapped as soon as it is ready.");
+  }
+  try { render(JSON.parse(py.globals.get("migrate_json")(text)), cfg, true); }
+  catch (e) { fail("Something went wrong mapping that config", e.message.split("\n").slice(-2).join(" ")); }
+}
+
+async function boot(){
+  try {
+    const pyo = await loadPyodide();
+    const r = await fetch("mapper.py", {cache: "no-cache"});
+    if (!r.ok) throw new Error("could not load mapper.py");
+    pyo.FS.writeFile("/home/pyodide/mapper.py", await r.text());
+    pyo.runPython(`
+import json, sys
+sys.path.insert(0, "/home/pyodide")
+from mapper import to_phonic
+def migrate_json(text):
+    agent, tools, schema, evals, r = to_phonic(json.loads(text))
+    return json.dumps({"agent": agent, "tools": tools, "schema": schema, "evals": evals, "report": r.items, "counts": r.counts()})
+`);
+    py = pyo;
+    setMsg("ok", "Ready. Runs entirely in your browser; nothing is sent anywhere.");
+    if (pending) run();
+  } catch (e) {
+    failed = true;
+    setMsg("err", "Python failed to load (" + e.message + "). The examples still show their precomputed results.");
+  }
+}
+
+$("#go").addEventListener("click", run);
+$("#cfg").addEventListener("keydown", e => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); run(); } });
+$("#cfg").addEventListener("input", markChip);
+$("#cfg").value = EXAMPLES[0].config;
+run();
+if (typeof loadPyodide === "function") boot();
+else { failed = true; setMsg("err", "Python could not be loaded from the CDN. The examples still show their precomputed results."); }
+
+</script>
+<!-- demo-chrome --><footer class="demo-foot"><span>A working build by <a href="https://pranavgudise.dev/">Pranav Gudise</a>. Synthetic or public data only.</span><a href="https://github.com/pg2342-hub/vapi-to-phonic">github.com/pg2342-hub/vapi-to-phonic</a></footer><!-- /demo-chrome -->
+</body>
+</html>
