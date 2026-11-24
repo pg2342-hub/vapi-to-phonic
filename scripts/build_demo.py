@@ -61,6 +61,8 @@ JS = (ROOT / "scripts" / "demo.js").read_text()
 
 def build():
     ex = precompute()
+    ex_json = json.dumps(ex).replace("</", "<\\/")
+    smoke = smoke_section()
     html = f"""<!doctype html>
 <html lang="en">
 <head>
@@ -116,7 +118,7 @@ def build():
 
 <section id="smoke">
   <h2>Smoke test on live calls</h2>
-  {smoke_section()}
+  {smoke}
 </section>
 
 <section id="limits">
@@ -141,7 +143,7 @@ python3 -m migrate smoke --since 2026-11-24</pre></div>
 </div>
 </main>
 <script src="https://cdn.jsdelivr.net/pyodide/v0.26.4/full/pyodide.js"></script>
-<script id="examples" type="application/json">{json.dumps(ex).replace("</", "<\\/")}</script>
+<script id="examples" type="application/json">{ex_json}</script>
 <script>
 {JS}
 </script>
