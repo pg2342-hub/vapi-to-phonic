@@ -186,7 +186,7 @@ ul.lim li{margin-bottom:10px}
 <aside class="side" aria-label="About this build">
   <nav aria-label="On this page"><a href="#tool">Migrate an assistant</a><a href="#how">How it works</a><a href="#smoke">Smoke test</a><a href="#limits">Limits</a></nav>
   <div><h3>Data</h3><p>Field names come from Vapi's public API reference (docs.vapi.ai) and Phonic's (docs.phonic.ai), read November 24, 2026. The three assistants are invented; their phone numbers (555) and URLs (example.com) are placeholders. Nothing you paste leaves your browser.</p></div>
-  <div><h3>Run it yourself</h3><p>Python 3.9+, standard library only. <code>apply</code> and <code>smoke</code> need a Phonic API key.</p><pre>python3 -m migrate plan examples/line_cook_screener.vapi.json
+  <div><h3>Run it yourself</h3><p>Python 3.10+, standard library only. <code>apply</code> and <code>smoke</code> need a Phonic API key.</p><pre>python3 -m migrate plan examples/line_cook_screener.vapi.json
 python3 -m migrate apply examples/line_cook_screener.vapi.json --accept-manual
 python3 -m migrate smoke --since 2026-11-24</pre></div>
   <div><a class="pill" href="https://github.com/pg2342-hub/vapi-to-phonic">Code on GitHub</a></div>
